@@ -1,0 +1,85 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              09/19/2024 15:24:33 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>  // Register definitions for STC89C52
+   2          #define uchar unsigned char
+   3          #define uint unsigned int
+   4          
+   5          // Pin definitions for SPI interface
+   6          sbit CS = P3^5;    // Chip Select pin
+   7          sbit SCLK = P3^6;  // Serial Clock pin
+   8          sbit MISO = P3^7;  // Master In Slave Out pin (Data from ADC)
+   9          sbit MOSI = P3^4;  // Master Out Slave In pin (Commands to ADC)
+  10          
+  11          // Function to generate a delay
+  12          void delay(uint x) {
+  13   1          uint i, j;
+  14   1          for(i = x; i > 0; i--) {
+  15   2              for(j = 110; j > 0; j--);
+  16   2          }
+  17   1      }
+  18          
+  19          // SPI initialization
+  20          void SPI_Init() {
+  21   1          CS = 1;       // Disable ADC initially
+  22   1          SCLK = 0;     // Set clock to low
+  23   1      }
+  24          
+  25          // SPI transfer (send and receive data)
+  26          uchar SPI_Transfer(uchar data_out) {
+  27   1          uchar i, data_in = 0;
+  28   1          for(i = 0; i < 8; i++) {
+  29   2              MOSI = (data_out & 0x80) >> 7;  // Send MSB first
+  30   2              data_out <<= 1;                 // Shift left for next bit
+  31   2              SCLK = 1;                       // Clock high
+  32   2              data_in <<= 1;                  // Shift data_in to the left
+  33   2              if(MISO) data_in |= 0x01;       // Read the input data
+  34   2              SCLK = 0;                       // Clock low
+  35   2          }
+  36   1          return data_in;
+  37   1      }
+  38          
+  39          // Read ADC data from ET2046
+  40          uint ET2046_Read(uint command) {
+  41   1          uint result;
+  42   1          CS = 0;                            // Enable ADC by pulling CS low
+  43   1          SPI_Transfer(command);             // Send command byte to ADC
+  44   1          result = SPI_Transfer(0x00) << 8;  // Read MSB
+  45   1          result |= SPI_Transfer(0x00);      // Read LSB
+  46   1          CS = 1;                            // Disable ADC by pulling CS high
+  47   1          return result;
+  48   1      }
+  49          
+  50          void main() {
+  51   1          uint adc_value;
+  52   1          SPI_Init();  // Initialize SPI communication
+  53   1      
+  54   1          while(1) {
+C51 COMPILER V9.60.7.0   MAIN                                                              09/19/2024 15:24:33 PAGE 2   
+
+  55   2              adc_value = ET2046_Read(0x90);  // Example: reading from X-position channel
+  56   2              delay(500);
+  57   2              // Use adc_value as needed
+  58   2          }
+  59   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    123    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

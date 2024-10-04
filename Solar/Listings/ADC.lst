@@ -1,0 +1,153 @@
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 13:17:44 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Objects\ADC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ADC.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ADC.l
+                    -st) TABS(2) OBJECT(.\Objects\ADC.obj)
+
+line level    source
+
+   1          # include <reg51.h>
+   2          # include "lcd.h"
+   3          # include <math.h>
+   4          
+   5          sbit CS =P3^5;          
+   6          sbit DCLK =P3^6;        
+   7          sbit DIN =P3^4;         
+   8          sbit DOUT =P3^7;       
+   9          sbit LED =P2^0; 
+  10          
+  11          unsigned char ADC_Driver (bit A0,bit A1,bit A2)          //SPI Protcol
+  12          {  
+  13   1        
+  14   1        unsigned char i, temp=0;
+  15   1         DCLK=0;                                      
+  16   1         CS=0;                                       
+  17   1        
+  18   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  19   1         DCLK=0;  DIN=A2;  DCLK=1;                    
+  20   1         DCLK=0;  DIN=A1;  DCLK=1;                     
+  21   1         DCLK=0;  DIN=A0;  DCLK=1;                      
+  22   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  23   1         DCLK=0;  DIN=1;  DCLK=1;                        
+  24   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  25   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  26   1        
+  27   1       
+  28   1        DCLK = 0;          
+  29   1        Delay(10);
+  30   1      
+  31   1      
+  32   1        for(i=0;i<=7;i++)
+  33   1        {  
+  34   2          temp <<=1;               
+  35   2                        
+  36   2           DCLK=1;                  
+  37   2           DCLK=0; 
+  38   2           temp |=DOUT;           
+  39   2             
+  40   2        }
+  41   1        
+  42   1         CS=1;              
+  43   1        
+  44   1        return temp;         
+  45   1      }
+  46          
+  47          //Voltage Measurment 
+  48          float displayVoltage()
+  49          {
+  50   1          unsigned int value1;
+  51   1          float voltage;
+  52   1      
+  53   1          value1 = ADC_Driver(1, 0, 0);     
+  54   1          voltage = value1 * (5.0 / 255.0);  
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 13:17:44 PAGE 2   
+
+  55   1      
+  56   1          LCD_ShowString(1, 0, "V:");
+  57   1          LCD_ShowNum(1, 3, (unsigned int)voltage, 1);                   
+  58   1          LCD_ShowChar(1, 4, '.');
+  59   1          LCD_ShowNum(1, 5, (unsigned int)(voltage * 1000) % 1000, 3); 
+  60   1          //LCD_ShowChar(2, 4, 'V');
+  61   1          Delay(1000);
+  62   1        
+  63   1          return voltage;
+  64   1      }
+  65          
+  66          
+  67          //LDR Measurment 
+  68          unsigned int displayLDR()
+  69          {
+  70   1          unsigned int value, scaledValue;
+  71   1      
+  72   1          value = ADC_Driver(0, 1, 0);        
+  73   1          scaledValue = (value * 100) / 255;  
+  74   1      
+  75   1          LCD_ShowString(1, 9, "LDR");
+  76   1          LCD_ShowNum(1, 13, scaledValue, 3);   
+  77   1          Delay(1000);
+  78   1        
+  79   1        return scaledValue;
+  80   1      }
+  81          void Contactor ()
+  82          {
+  83   1        
+  84   1           float Voltage_Value;
+  85   1           unsigned int LDR_Value;
+  86   1        
+  87   1            Voltage_Value=displayVoltage();
+  88   1            Delay(1000);
+  89   1            LDR_Value=displayLDR();
+  90   1            Delay(1000);
+  91   1          
+  92   1            if(LDR_Value<30)  //Night Time
+  93   1            {
+  94   2            
+  95   2              if(Voltage_Value>=4)
+  96   2              {
+  97   3                LCD_ClearSecondLine();
+*** WARNING C206 IN LINE 97 OF ADC.c: 'LCD_ClearSecondLine': missing function-prototype
+  98   3                LCD_ShowString(2, 0, "WAPDA SUPPLY ON");
+  99   3                 LED=1;
+ 100   3                Delay(1000);
+ 101   3              }
+ 102   2                else
+ 103   2                { LCD_ClearSecondLine(); 
+ 104   3                  LCD_ShowString(2, 0, "RemoveHeavy load");
+ 105   3                  LED=0;
+ 106   3                  Delay(1000);
+ 107   3                 }
+ 108   2            
+ 109   2            
+ 110   2            
+ 111   2            }
+ 112   1              else
+ 113   1               {LCD_ClearSecondLine();  
+ 114   2                LCD_ShowString(2, 0, "Day Enjoy Solar ");   Delay(1000);}
+ 115   1      
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 13:17:44 PAGE 3   
+
+ 116   1      }
+ 117          void main()
+ 118          {    
+ 119   1          LCD_Intialization();
+ 120   1          while (1)
+ 121   1          {
+ 122   2            Contactor ();      
+ 123   2          }
+ 124   1        }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    440    ----
+   CONSTANT SIZE    =     57    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      13
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

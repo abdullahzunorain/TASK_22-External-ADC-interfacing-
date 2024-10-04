@@ -1,0 +1,103 @@
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 12:32:41 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Objects\ADC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ADC.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ADC.l
+                    -st) TABS(2) OBJECT(.\Objects\ADC.obj)
+
+line level    source
+
+   1          # include <reg52.h>
+   2          # include "lcd.h"
+   3          #include <math.h>
+   4          
+   5          
+   6          sbit CS =P3^5;          
+   7          sbit DCLK =P3^6;        
+   8          sbit DIN =P3^4;         
+   9          sbit DOUT =P3^7;        
+  10          
+  11          void ADC_Temprature ();
+  12          unsigned char ADC_Driver (bit A0,bit A1,bit A2)          //SPI Protcol
+  13          {  
+  14   1        
+  15   1        unsigned char i, temp=0;
+  16   1         DCLK=0;                                        
+  17   1         CS=0;                                          
+  18   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  19   1         DCLK=0;  DIN=A2;  DCLK=1;                     
+  20   1         DCLK=0;  DIN=A1;  DCLK=1;                      
+  21   1         DCLK=0;  DIN=A0;  DCLK=1;                       
+  22   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  23   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  24   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  25   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  26   1        
+  27   1         
+  28   1        DCLK = 0;           
+  29   1        Delay(10);
+  30   1      
+  31   1      
+  32   1        for(i=0;i<=7;i++)
+  33   1        {  
+  34   2          temp <<=1;                
+  35   2                        
+  36   2           DCLK=1;                  
+  37   2           DCLK=0; 
+  38   2           temp |=DOUT;            
+  39   2             
+  40   2        }
+  41   1        
+  42   1         CS=1;               
+  43   1        
+  44   1        return temp;         
+  45   1      }
+  46          
+  47          void ADC_Temprature ()
+  48          {
+  49   1        
+  50   1       unsigned int temp_Value;
+  51   1          float T, Temperature;
+  52   1      
+  53   1          temp_Value = ADC_Driver(1, 0, 1);      
+  54   1        
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 12:32:41 PAGE 2   
+
+  55   1          T = 1 / ((1 / 298.15) + ((1 / 3380.0) * log((255.0 / temp_Value) - 1)));  //Special Formula
+  56   1          Temperature = T - 273.15;          //Kelvin to degree conversiuon
+  57   1      
+  58   1          LCD_ShowString(1, 0, "Temp: ");
+  59   1          LCD_ShowNum(2, 0, Temperature, 2);     
+  60   1          LCD_ShowChar(2, 2, '.');
+  61   1          LCD_ShowNum(2, 3, (unsigned int)(Temperature * 1000) % 1000, 3);  
+  62   1          LCD_ShowChar(2, 6, 'C');
+  63   1          Delay(1000);
+  64   1      
+  65   1      
+  66   1      
+  67   1      } 
+  68          void main ()  
+  69          {
+  70   1         LCD_Intialization();      
+  71   1        
+  72   1        while(1)
+  73   1        { 
+  74   2          ADC_Temprature ();
+  75   2        }     
+  76   1             
+  77   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    334    ----
+   CONSTANT SIZE    =      7    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

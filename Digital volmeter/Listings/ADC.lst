@@ -1,0 +1,105 @@
+C51 COMPILER V9.60.7.0   ADC                                                               09/19/2024 15:11:28 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Objects\ADC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ADC.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ADC.l
+                    -st) TABS(2) OBJECT(.\Objects\ADC.obj)
+
+line level    source
+
+   1          # include <reg52.h>
+   2          # include "lcd.h"
+   3          
+   4          // In this Code we are using SPI communication 
+   5          
+   6          sbit CS =P3^5;          
+   7          sbit DCLK =P3^6;       
+   8          sbit DIN =P3^4;        
+   9          sbit DOUT =P3^7;       
+  10          
+  11                  
+  12          void ADC_VOLTAGE ();
+  13          unsigned char ADC_Driver (bit A0,bit A1,bit A2)          //SPI Protcol
+  14          {  
+  15   1        
+  16   1        unsigned char i, temp=0;
+  17   1         DCLK=0;                                        
+  18   1         CS=0;                                         
+  19   1        
+  20   1         //Control Byte Transfer Start
+  21   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  22   1         DCLK=0;  DIN=A2;  DCLK=1;                     
+  23   1         DCLK=0;  DIN=A1;  DCLK=1;                   
+  24   1         DCLK=0;  DIN=A0;  DCLK=1;                    
+  25   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  26   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  27   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  28   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  29   1        
+  30   1         //After control Byte transfer take a while To start conversion of data
+  31   1        DCLK = 0;           
+  32   1        Delay(10);
+  33   1      
+  34   1      //Start Data Conversion (the Data Conversion bits are triggred on falling edge)
+  35   1        for(i=0;i<=7;i++)
+  36   1        {  
+  37   2          temp <<=1;               
+  38   2                        
+  39   2           DCLK=1;                 
+  40   2           DCLK=0; 
+  41   2           temp |=DOUT;            //data Stored in temp
+  42   2             
+  43   2        }
+  44   1        
+  45   1         CS=1;               
+  46   1        
+  47   1        return temp;        
+  48   1      }
+  49          
+  50             //Voltage Measurment
+  51          void ADC_VOLTAGE ()    
+  52          {
+  53   1        float voltage,value;    
+  54   1        
+C51 COMPILER V9.60.7.0   ADC                                                               09/19/2024 15:11:28 PAGE 2   
+
+  55   1        value = ADC_Driver(1,0,0);                   
+  56   1        
+  57   1               voltage=value*(5.0/255.0);             //(0 to 5V scale) voltage= 5.0(Maxiuim Voltage on 255.0)*ADC
+             -_Value/255.0 (highest Value to which ADC measure)
+  58   1               LCD_ShowString(1,0,"Voltage: ");
+  59   1               LCD_ShowNum(2,1,voltage,1);            
+  60   1               LCD_ShowChar(2,2,'.'); 
+  61   1               LCD_ShowNum(2,3,(unsigned int)(voltage*1000)%1000,3); 
+  62   1               LCD_ShowChar(2,6,'V'); 
+  63   1               Delay(1000);
+  64   1      
+  65   1      }
+  66            void main ()  
+  67          {
+  68   1        LCD_Intialization();          
+  69   1        
+  70   1        while(1)
+  71   1        {    
+  72   2                ADC_VOLTAGE ();       // Call the ADC voltage Function
+  73   2        }   
+  74   1           
+  75   1      }
+  76          
+  77            
+  78            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    259    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

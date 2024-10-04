@@ -1,0 +1,150 @@
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 12:50:19 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Objects\ADC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ADC.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ADC.l
+                    -st) TABS(2) OBJECT(.\Objects\ADC.obj)
+
+line level    source
+
+   1          # include <reg52.h>
+   2          # include "lcd.h"
+   3          #include <math.h>
+   4          
+   5          
+   6          
+   7          sbit CS =P3^5;         
+   8          sbit DCLK =P3^6;      
+   9          sbit DIN =P3^4;         
+  10          sbit DOUT =P3^7;     
+  11          
+  12          float displayTemperature();
+  13          unsigned int displayLDR();
+  14          void AC_Controller ();
+  15          
+  16          unsigned char ADC_Driver (bit A0,bit A1,bit A2)          //SPI Protcol
+  17          {  
+  18   1        
+  19   1        unsigned char i, temp=0;
+  20   1         DCLK=0;                                       
+  21   1         CS=0;                                          
+  22   1         //Control Byte Transfer Start(On Rising Edge of DCLK, The data byte bits are triggred)
+  23   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  24   1         DCLK=0;  DIN=A2;  DCLK=1;                     
+  25   1         DCLK=0;  DIN=A1;  DCLK=1;                      
+  26   1         DCLK=0;  DIN=A0;  DCLK=1;                    
+  27   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  28   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  29   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  30   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  31   1        
+  32   1         //After control Byte transfer take a while To start conversion of data
+  33   1        DCLK = 0;          
+  34   1        Delay(10);
+  35   1      
+  36   1      //Start Data Conversion (the Data Conversion bits are triggred on falling edge)
+  37   1        for(i=0;i<=7;i++)
+  38   1        {  
+  39   2          temp <<=1;                
+  40   2                        
+  41   2           DCLK=1;                 
+  42   2           DCLK=0; 
+  43   2           temp |=DOUT;            
+  44   2             
+  45   2        }
+  46   1        
+  47   1         CS=1;              
+  48   1        
+  49   1        return temp;       
+  50   1      }
+  51          
+  52          //Temprature Measurment
+  53          float displayTemperature()
+  54          {
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 12:50:19 PAGE 2   
+
+  55   1          unsigned int temp_Value;
+  56   1          float T, Temperature;
+  57   1      
+  58   1          temp_Value = ADC_Driver(1, 0, 1);                                        
+  59   1          T = 1 / ((1 / 298.15) + ((1 / 3380.0) * log((255.0 / temp_Value) - 1)));  //Special Formula
+  60   1          Temperature = T - 273.15;                                                 //Kelvin to degree conversiu
+             -on
+  61   1      
+  62   1          LCD_ShowString(1, 0, "T:");
+  63   1          LCD_ShowNum(1, 2, (unsigned int)Temperature, 2);               
+  64   1          LCD_ShowChar(1, 4, '.');
+  65   1          LCD_ShowNum(1, 5, (unsigned int)(Temperature * 1000) % 1000, 3);
+  66   1        //  LCD_ShowChar(2, 11, 'C');
+  67   1          Delay(1000);
+  68   1        return Temperature;
+  69   1      }
+  70          //LDR Measurment 
+  71          unsigned int displayLDR()
+  72          {
+  73   1          unsigned int value, scaledValue;
+  74   1      
+  75   1          value = ADC_Driver(0, 1, 0);       
+  76   1          scaledValue = (value * 100) / 255;   
+  77   1      
+  78   1          LCD_ShowString(1,9, "LDR: ");
+  79   1          LCD_ShowNum(1, 13, scaledValue, 3);  
+  80   1          Delay(1000);
+  81   1          return scaledValue;
+  82   1      }
+  83          
+  84          void AC_Controller ()                 
+  85          {
+  86   1        
+  87   1        float LDR_Value;
+  88   1        unsigned int  Temprature_Value;
+  89   1      
+  90   1             LDR_Value=displayLDR();                
+  91   1             Temprature_Value=displayTemperature();
+  92   1             
+  93   1            if(LDR_Value>30)      
+  94   1              {
+  95   2              
+  96   2              if(Temprature_Value<26)          
+  97   2                { LCD_ClearSecondLine();
+*** WARNING C206 IN LINE 97 OF ADC.c: 'LCD_ClearSecondLine': missing function-prototype
+  98   3                LCD_ShowString(2,0 , "Control: AC OFF ");Delay(10000);}
+  99   2              else if(Temprature_Value>29)
+ 100   2                {LCD_ClearSecondLine();   
+ 101   3                LCD_ShowString(2,0 , "Control: AC ON ");Delay(10000);}
+ 102   2              
+ 103   2              }
+ 104   1              else                  
+ 105   1              { 
+ 106   2              LCD_ClearSecondLine();
+ 107   2                LCD_ShowString(2,0 , "NightTime AC OFF ");  Delay(10000);
+ 108   2              }
+ 109   1      
+ 110   1      
+ 111   1      }
+ 112          void main()           //main function
+ 113          {    
+ 114   1          LCD_Intialization(); 
+C51 COMPILER V9.60.7.0   ADC                                                               09/24/2024 12:50:19 PAGE 3   
+
+ 115   1      
+ 116   1          while (1)
+ 117   1          {
+ 118   2             AC_Controller ();    
+ 119   2          }
+ 120   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    519    ----
+   CONSTANT SIZE    =     60    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      17
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

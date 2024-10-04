@@ -1,0 +1,5 @@
+".\Objects\ADC.obj",
+".\Objects\lcd.obj",
+".\Objects\main.obj" 
+TO ".\Objects\Digital volmeter" 
+PRINT(".\Listings\Digital volmeter.m51") RAMSIZE(256) 

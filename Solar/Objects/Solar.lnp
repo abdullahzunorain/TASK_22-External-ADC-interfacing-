@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\ADC.obj",
+".\Objects\lcd.obj" 
+TO ".\Objects\Solar" 
+PRINT(".\Listings\Solar.m51") RAMSIZE(256) 

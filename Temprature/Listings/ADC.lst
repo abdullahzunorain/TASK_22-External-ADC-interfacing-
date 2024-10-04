@@ -1,0 +1,157 @@
+C51 COMPILER V9.60.7.0   ADC                                                               09/19/2024 15:15:59 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Objects\ADC.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ADC.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ADC.l
+                    -st) TABS(2) OBJECT(.\Objects\ADC.obj)
+
+line level    source
+
+   1          # include <reg51.h>
+   2          # include "lcd.h"
+   3          #include <math.h>
+   4          
+   5          sbit CS =P3^5;          
+   6          sbit DCLK =P3^6;       
+   7          sbit DIN =P3^4;      
+   8          sbit DOUT =P3^7;        
+   9          sbit BP = P1^5;         //Buzzer Pin
+  10          
+  11          float displayVoltage();
+  12          float displayTemperature();
+  13          unsigned int displayLDR();
+  14          void Beep();
+  15          float Set_temp();
+  16          unsigned char ADC_Driver (bit A0,bit A1,bit A2)          //SPI Protcol
+  17          {   
+  18   1        unsigned char i, temp=0;
+  19   1         DCLK=0;                                       
+  20   1         CS=0;                                          
+  21   1         
+  22   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  23   1         DCLK=0;  DIN=A2;  DCLK=1;                     
+  24   1               DCLK=0;  DIN=A1;  DCLK=1;                    
+  25   1         DCLK=0;  DIN=A0;  DCLK=1;                    
+  26   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  27   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  28   1         DCLK=0;  DIN=1;  DCLK=1;                      
+  29   1         DCLK=0;  DIN=1;  DCLK=1;                     
+  30   1         DCLK = 0;        
+  31   1         Delay(10);
+  32   1      
+  33   1      
+  34   1        for(i=0;i<=7;i++)
+  35   1        {  
+  36   2          temp <<=1;               
+  37   2                        
+  38   2           DCLK=1;                  
+  39   2           DCLK=0; 
+  40   2           temp |=DOUT;            
+  41   2             
+  42   2        }
+  43   1        
+  44   1         CS=1;              
+  45   1        
+  46   1        return temp;         
+  47   1      }
+  48          
+  49          //Voltage Measurment 
+  50           float displayVoltage()
+  51          {
+  52   1          unsigned int value1;
+  53   1          float voltage;
+  54   1      
+C51 COMPILER V9.60.7.0   ADC                                                               09/19/2024 15:15:59 PAGE 2   
+
+  55   1          value1 = ADC_Driver(1, 0, 0);      
+  56   1          voltage = value1 * (5.0 / 255.0);  
+  57   1          Delay(1000);
+  58   1        return voltage;
+  59   1        
+  60   1      }
+  61          
+  62          //Temprature Measurment
+  63          float  displayTemperature()
+  64          {
+  65   1          unsigned int temp_Value;
+  66   1          float T, Temperature;
+  67   1      
+  68   1          temp_Value = ADC_Driver(1, 0, 1);                                    
+  69   1          T = 1 / ((1 / 298.15) + ((1 / 3380.0) * log((255.0 / temp_Value) - 1)));  //Special Formula
+  70   1          Temperature = T - 273.15;                                                
+  71   1      
+  72   1          LCD_ShowString(1, 10, "Temp: ");
+  73   1          LCD_ShowNum(2, 10, (unsigned int)Temperature, 2);                  
+  74   1          LCD_ShowChar(2, 12, '.');
+  75   1          LCD_ShowNum(2, 13, (unsigned int)(Temperature * 1000) % 1000, 3);  
+  76   1        //  LCD_ShowChar(2, 11, 'C');
+  77   1          Delay(1000);
+  78   1        return Temperature;
+  79   1      }
+  80          
+  81          
+  82          //Temprature Setting
+  83          float Set_temp()
+  84          {
+  85   1             float Set_Temp,voltage1;
+  86   1        
+  87   1             voltage1=displayVoltage();
+  88   1             Set_Temp=(40.0*voltage1)/5.0; 
+  89   1             LCD_ShowString(1,0, "SetTemp ");
+  90   1             LCD_ShowNum(2, 0, Set_Temp, 2);
+  91   1             LCD_ShowChar(2, 2, '.');
+  92   1             LCD_ShowNum(2, 3, (int)( Set_Temp* 1000) % 1000, 3);
+  93   1        
+  94   1          return Set_Temp;
+  95   1      }
+  96          
+  97          void Beep()
+  98          {
+  99   1          unsigned char i;
+ 100   1        
+ 101   1      
+ 102   1         for(i=0;i<200;i++)            
+ 103   1        {
+ 104   2           BP=0;
+ 105   2           Delay(16);
+ 106   2           BP=1;
+ 107   2           Delay(16);
+ 108   2      }
+ 109   1      }
+ 110          void main()
+ 111          {   
+ 112   1        float SET_temp,Temprature1;              
+ 113   1          LCD_Intialization();                  
+ 114   1      
+ 115   1          while (1)
+ 116   1          {
+C51 COMPILER V9.60.7.0   ADC                                                               09/19/2024 15:15:59 PAGE 3   
+
+ 117   2             
+ 118   2            SET_temp=Set_temp();                 
+ 119   2            Delay(1000);                          
+ 120   2            Temprature1=displayTemperature();  
+ 121   2            Delay(1000);
+ 122   2            
+ 123   2            if(Temprature1>SET_temp)           
+ 124   2            {
+ 125   3              Beep();
+ 126   3            }
+ 127   2        
+ 128   2          }
+ 129   1        }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    623    ----
+   CONSTANT SIZE    =     16    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      30
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       3
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

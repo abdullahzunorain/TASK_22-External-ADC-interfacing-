@@ -1,0 +1,4 @@
+".\Objects\ADC.obj",
+".\Objects\lcd.obj" 
+TO ".\Objects\AC Controller" 
+PRINT(".\Listings\AC Controller.m51") RAMSIZE(256) 

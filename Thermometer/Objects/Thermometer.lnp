@@ -1,0 +1,4 @@
+".\Objects\ADC.obj",
+".\Objects\lcd.obj" 
+TO ".\Objects\Thermometer" 
+PRINT(".\Listings\Thermometer.m51") RAMSIZE(256) 
