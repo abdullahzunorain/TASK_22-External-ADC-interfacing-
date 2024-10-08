@@ -1,5 +1,7 @@
 ### Task 22: External ADC Interfacing with ET2046
 
+![](_task_22.jpg)
+
 #### Overview
 The STC89C52 microcontroller does not have a built-in ADC. We will interface an external ADC (ET2046) to read analog voltages from multiple sources like potentiometers, thermistors, and LDRs (Light Dependent Resistors). This task covers various applications using ET2046.
 
